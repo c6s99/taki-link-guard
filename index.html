@@ -1,0 +1,108 @@
+
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Taki Link Guard</title>
+<style>
+body{margin:0;background:#09131f;color:#edf5ff;font-family:Arial,Tahoma,sans-serif;padding:20px}
+main{max-width:680px;margin:35px auto;background:#132235;padding:25px;border-radius:18px;border:1px solid #28415a}
+h1{color:#48e0a4;text-align:center}
+p{line-height:1.8;color:#c5d4e5}
+input{box-sizing:border-box;width:100%;padding:14px;border-radius:9px;border:1px solid #496078;background:#09131f;color:white;font-size:16px;margin:12px 0}
+button{width:100%;padding:13px;background:#19b981;color:#062218;border:0;border-radius:9px;font-size:17px;font-weight:bold;cursor:pointer}
+.result{margin-top:18px;padding:15px;border-radius:10px;line-height:1.8;overflow-wrap:anywhere}
+.warn{background:#492a20;color:#ffd2b8}
+.ok{background:#163e32;color:#baffdd}
+.neutral{background:#26374b;color:#e0edff}
+small{color:#9fb2c8}
+</style>
+</head>
+<body>
+<main>
+<h1>🛡️ TAKI LINK GUARD</h1>
+<p style="text-align:center">أداة أولية لفحص علامات الروابط المشبوهة</p>
+
+<label for="url">الصق الرابط هنا:</label>
+<input id="url" type="text" placeholder="https://example.com" autocomplete="off">
+<button id="scan">🔎 افحص الرابط</button>
+<div id="result" class="result neutral" aria-live="polite">
+نتيجة الفحص تظهر هنا.
+</div>
+<p><small>الفحص محلي في المتصفح. لا ترسل الأداة الرابط إلى خدمة خارجية ولا تفتح الرابط.</small></p>
+</main>
+
+<script>
+(function(){
+var input=document.getElementById("url");
+var output=document.getElementById("result");
+
+document.getElementById("scan").onclick=function(){
+var value=input.value.trim();
+var issues=[];
+
+output.className="result neutral";
+
+if(!value){
+output.textContent="اكتب رابطًا أولًا.";
+return;
+}
+
+if(/\s/.test(value)){
+issues.push("الرابط يحتوي على مسافات.");
+}
+
+if(/^https?:\/\//i.test(value)===false){
+issues.push("الرابط لا يبدأ بـ http:// أو https://.");
+}
+
+var parsed;
+try{
+parsed=new URL(value);
+}catch(e){
+output.className="result warn";
+output.textContent="⚠️ صيغة الرابط غير صالحة. لا تفتحه.";
+return;
+}
+
+if(parsed.protocol!=="http:" && parsed.protocol!=="https:"){
+issues.push("نوع البروتوكول غير متوقع.");
+}
+
+if(parsed.username || parsed.password){
+issues.push("الرابط يحتوي على بيانات دخول قبل اسم الموقع.");
+}
+
+if(/^\d{1,3}(\.\d{1,3}){3}$/.test(parsed.hostname)){
+issues.push("الرابط يستخدم عنوان IP بدل اسم نطاق عادي.");
+}
+
+if(parsed.hostname.indexOf("xn--")!==-1){
+issues.push("اسم النطاق يحتوي على ترميز قد يخفي تشابه الحروف.");
+}
+
+if(parsed.hostname.length>70){
+issues.push("اسم النطاق طويل بشكل غير معتاد.");
+}
+
+if(parsed.hostname.split(".").some(function(part){return part.length>35;})){
+issues.push("جزء من اسم النطاق طويل بشكل غير معتاد.");
+}
+
+if(/%[0-9a-f]{2}/i.test(parsed.pathname)){
+issues.push("مسار الرابط يحتوي على ترميز؛ افحصه بحذر.");
+}
+
+if(issues.length){
+output.className="result warn";
+output.textContent="⚠️ توجد علامات تستحق الحذر:\n• "+issues.join("\n• ")+"\n\nهذه العلامات لا تثبت وحدها أن الرابط خبيث.";
+}else{
+output.className="result ok";
+output.textContent="✅ لم تظهر علامات الخطر البسيطة التي تبحث عنها هذه النسخة.\n\nهذا لا يعني أن الرابط آمن؛ الأداة لا تتحقق من سمعة الموقع أو محتواه.";
+}
+};
+})();
+</script>
+</body>
+</html>
